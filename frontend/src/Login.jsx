@@ -1,17 +1,16 @@
 
 import { useState } from "react";
 
-function Login() {
+function Login({ onLoginSuccess }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [accessToken, setAccessToken] = useState("");
 
   async function handleSubmit(event) {
     event.preventDefault();
+
     setMessage("");
-    setAccessToken("");
     setLoading(true);
 
     try {
@@ -23,8 +22,11 @@ function Login() {
             "Content-Type": "application/json",
           },
           credentials: "include",
-          body: JSON.stringify({ email, password }),
-        },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        }
       );
 
       const data = await response.json();
@@ -34,14 +36,15 @@ function Login() {
       }
 
       if (!data.accessToken) {
-        throw new Error("Login succeeded, but no access token was returned");
+        throw new Error("No access token returned by the server");
       }
 
-      setAccessToken(data.accessToken);
-      setMessage("Login successful!");
+      onLoginSuccess(data.accessToken);
       setPassword("");
     } catch (error) {
-      setMessage(error.message || "Unable to connect to backend");
+      setMessage(
+        error.message || "Unable to connect to the server"
+      );
     } finally {
       setLoading(false);
     }
@@ -52,36 +55,38 @@ function Login() {
       <h1>Login</h1>
 
       <form onSubmit={handleSubmit}>
-        <label htmlFor="login-email">Email</label>
-        <input
-          id="login-email"
-          type="email"
-          autoComplete="username"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          required
-        />
+        <div>
+          <label htmlFor="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="Enter your email"
+            autoComplete="email"
+            required
+          />
+        </div>
 
-        <label htmlFor="login-password">Password</label>
-        <input
-          id="login-password"
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          required
-        />
-{/* submit-Tells the browser to submit the form when the button is clicked. */}
+        <div>
+          <label htmlFor="password">Password</label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Enter your password"
+            autoComplete="current-password"
+            required
+          />
+        </div>
+
         <button type="submit" disabled={loading}>
           {loading ? "Logging in..." : "Login"}
         </button>
       </form>
 
-      {message && <p role="status">{message}</p>}
-
-      {accessToken && (
-        <p>Access token received. You can now request protected APIs.</p>
-      )}
+      {message && <p role="alert">{message}</p>}
     </main>
   );
 }
